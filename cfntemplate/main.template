@@ -1,0 +1,602 @@
+{
+  "Description": "reference: https://docs.aws.amazon.com/dms/latest/sbs/CHAP_MySQL2Aurora.RDSMySQL.html",
+  "Metadata": {},
+  "Parameters": {
+    "PublicIp": {
+      "Type": "String",
+      "Description": "all of the internet",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+      "Default": "0.0.0.0/0"
+    },
+    "RemoteAccessIp": {
+      "Type": "String",
+      "Description": "remote ip to whitelist",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+      "Default": "82.15.0.0/16"
+    },
+    "VpcRange": {
+      "Type": "String",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+      "Default": "10.0.0.0/16"
+    },
+    "WebSubnetRange": {
+      "Type": "String",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+      "Default": "10.0.1.0/24"
+    },
+    "DBSubnetRange": {
+      "Type": "String",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+      "Default": "10.0.2.0/24"
+    },
+    "AnotherDBSubnetRange": {
+      "Type": "String",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+      "Default": "10.0.3.0/24"
+    },
+    "DBPort": {
+      "Description": "port for MySQL",
+      "Default": "3306",
+      "Type": "String"
+    },
+    "WebPort": {
+      "Description": "port for the web app",
+      "Default": "80",
+      "Type": "String"
+    },
+    "AmiID": {
+      "Description": "picks the latest amzn2 linux ami for the region",
+      "Default": "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    },
+    "WebServerInstanceType": {
+      "Description": "picks the latest amzn2 linux ami for the region",
+      "Default": "t2.micro",
+      "Type": "String"
+    },
+    "DBInstanceClass": {
+      "Description": "DB instance class",
+      "Default": "db.m5.large",
+      "Type": "String"
+    },
+    "SchemaName": {
+      "Description": "DB Schema",
+      "Default": "demo",
+      "Type": "String"
+    },
+    "DBEngine": {
+      "Description": "DB Engine",
+      "Default": "mysql",
+      "Type": "String"
+    },
+    "DBEngineVersion": {
+      "Description": "DB Engine Version",
+      "Default": "5.6.43",
+      "Type": "String"
+    },
+    "DBUser": {
+      "Description": "database admin",
+      "Default": "admin",
+      "Type": "String"
+    },
+    "DBPassword": {
+      "Description": "password for admin user",
+      "Default": "adminpassword",
+      "NoEcho": true,
+      "Type": "String"
+    },
+    "DBId": {
+      "Description": "database identifier",
+      "Default": "rdsmigrationdemo",
+      "Type": "String"
+    }
+  },
+  "Mappings": {},
+  "Conditions": {},
+  "Resources": {
+    "TheCodeBucket": {
+      "Type": "AWS::S3::Bucket"
+    },
+    "TheVpc": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {
+          "Ref": "VpcRange"
+        },
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-Vpc"
+          }
+        }]
+      }
+    },
+    "TheInternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-InternetGateway"
+          }
+        }]
+      }
+    },
+    "TheInternetGatewayVpcAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "TheInternetGateway"
+        },
+        "VpcId": {
+          "Ref": "TheVpc"
+        }
+      }
+    },
+    "TheWebRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "TheVpc"
+        },
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-WebRouteTable"
+          }
+        }]
+      }
+    },
+    "TheWebRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": ["TheInternetGatewayVpcAttachment"],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Ref": "PublicIp"
+        },
+        "GatewayId": {
+          "Ref": "TheInternetGateway"
+        },
+        "RouteTableId": {
+          "Ref": "TheWebRouteTable"
+        }
+      }
+    },
+    "TheDBRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "TheVpc"
+        },
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-DBRouteTable"
+          }
+        }]
+      }
+    },
+"TheAuroraDBCluster": {
+"Type": "AWS::RDS::DBCluster",
+"DeletionPolicy": "Retain",
+"UpdateReplacePolicy": "Retain",
+"Properties": {
+"DBClusterIdentifier": "asifbbcdemoaurorareplica-cluster",
+"Engine": "aurora",
+"MasterUsername": {
+"Ref": "DBUser"
+},
+"MasterUserPassword": {
+"Ref": "DBPassword"
+}
+}
+},  "TheDBRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": ["TheInternetGatewayVpcAttachment"],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Ref": "PublicIp"
+        },
+        "GatewayId": {
+          "Ref": "TheInternetGateway"
+        },
+        "RouteTableId": {
+          "Ref": "TheDBRouteTable"
+        }
+      }
+    },
+    "TheWebSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": {
+                "Ref": "AWS::Region"
+              }
+            }
+          ]
+        },
+        "CidrBlock": {
+          "Ref": "WebSubnetRange"
+        },
+        "MapPublicIpOnLaunch": true,
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-WebSubnet"
+          }
+        }],
+        "VpcId": {
+          "Ref": "TheVpc"
+        }
+      }
+    },
+    "TheDBSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": {
+                "Ref": "AWS::Region"
+              }
+            }
+          ]
+        },
+        "CidrBlock": {
+          "Ref": "DBSubnetRange"
+        },
+        "MapPublicIpOnLaunch": true,
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-DBSubnet1"
+          }
+        }],
+        "VpcId": {
+          "Ref": "TheVpc"
+        }
+      }
+    },
+    "TheOtherDBSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": {
+                "Ref": "AWS::Region"
+              }
+            }
+          ]
+        },
+        "CidrBlock": {
+          "Ref": "AnotherDBSubnetRange"
+        },
+        "MapPublicIpOnLaunch": true,
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-DBSubnet2"
+          }
+        }],
+        "VpcId": {
+          "Ref": "TheVpc"
+        }
+      }
+    },
+    "TheWebSubnetRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TheWebRouteTable"
+        },
+        "SubnetId": {
+          "Ref": "TheWebSubnet"
+        }
+      }
+    },
+    "TheDBSubnetRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TheDBRouteTable"
+        },
+        "SubnetId": {
+          "Ref": "TheDBSubnet"
+        }
+      }
+    },
+    "TheOtherDBSubnetRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TheDBRouteTable"
+        },
+        "SubnetId": {
+          "Ref": "TheOtherDBSubnet"
+        }
+      }
+    },
+    "TheWebSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "remote ip inbound",
+        "SecurityGroupIngress": [{
+          "IpProtocol": "tcp",
+          "Description": "allow web traffic",
+          "FromPort": {
+            "Ref": "WebPort"
+          },
+          "ToPort": {
+            "Ref": "WebPort"
+          },
+          "CidrIp": {
+            "Ref": "RemoteAccessIp"
+          }
+        }],
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-WebSecurityGroup"
+          }
+        }],
+        "VpcId": {
+          "Ref": "TheVpc"
+        }
+      }
+    },
+    "TheDBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "remote ip inbound on port 3306",
+        "SecurityGroupIngress": [{
+          "IpProtocol": "tcp",
+          "Description": "allow tcp traffic on 3306",
+          "FromPort": {
+            "Ref": "DBPort"
+          },
+          "ToPort": {
+            "Ref": "DBPort"
+          },
+          "CidrIp": {
+            "Ref": "RemoteAccessIp"
+          }
+        }, {
+          "IpProtocol": "tcp",
+          "Description": "allow tcp traffic on 3306",
+          "FromPort": {
+            "Ref": "DBPort"
+          },
+          "ToPort": {
+            "Ref": "DBPort"
+          },
+          "SourceSecurityGroupId": {
+            "Ref": "TheWebSecurityGroup"
+          }
+        }],
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-DBSecurityGroup"
+          }
+        }],
+        "VpcId": {
+          "Ref": "TheVpc"
+        }
+      }
+    },
+    "TheRDSInstance": {
+      "DependsOn": ["TheWebServerInstance"],
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "AllocatedStorage": "200",
+        "DBInstanceClass": {
+          "Ref": "DBInstanceClass"
+        },
+        "DBInstanceIdentifier": {
+          "Ref": "DBId"
+        },
+        "DBName": {
+          "Ref": "SchemaName"
+        },
+        "DBSubnetGroupName": {
+          "Ref": "TheDBSubnetGroup"
+        },
+        "Engine": {
+          "Ref": "DBEngine"
+        },
+        "EngineVersion": {
+          "Ref": "DBEngineVersion"
+        },
+        "MasterUsername": {
+          "Ref": "DBUser"
+        },
+        "MasterUserPassword": {
+          "Ref": "DBPassword"
+        },
+        "MultiAZ": false,
+        "Port": {
+          "Ref": "DBPort"
+        },
+        "PubliclyAccessible": true,
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-DBInstance"
+          }
+        }],
+        "VPCSecurityGroups": [{
+          "Ref": "TheDBSecurityGroup"
+        }]
+      }
+    },
+    "TheInstanceProfileRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": [
+                "ec2.amazonaws.com",
+                "s3.amazonaws.com"
+              ]
+            },
+            "Action": [
+              "sts:AssumeRole"
+            ]
+          }]
+        },
+        "Policies": [{
+          "PolicyName": "S3AccessPolicy",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": [
+                "s3:ListBucket"
+              ],
+              "Resource": [{
+                "Fn::Sub": "arn:aws:s3:::${TheCodeBucket}"
+              }]
+            }, {
+              "Effect": "Allow",
+              "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:PutObjectAcl"
+              ],
+              "Resource": [{
+                "Fn::Sub": "arn:aws:s3:::${TheCodeBucket}/*"
+              }]
+            }]
+          }
+        }],
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        ]
+      }
+    },
+    "TheWebServerInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [{
+          "Ref": "TheInstanceProfileRole"
+        }]
+      }
+    },
+    "TheWebServerInstance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "IamInstanceProfile": {
+          "Ref": "TheWebServerInstanceProfile"
+        },
+        "ImageId": {
+          "Ref": "AmiID"
+        },
+        "InstanceType": {
+          "Ref": "WebServerInstanceType"
+        },
+        "SubnetId": {
+          "Ref": "TheWebSubnet"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "\n",
+              [
+                "#!/bin/bash -xe",
+                "yum update -y",
+                "yum install python37 -y",
+                "yum install python3-devel.x86_64 mysql-devel mysql gcc -y",
+                "curl -O 'https://bootstrap.pypa.io/get-pip.py'",
+                "export PATH = /usr/local/bin:$PATH",
+                "python3 get-pip.py --user",
+                "pip3 install awscli --upgrade --user"
+              ]
+            ]
+          }
+        },
+        "SecurityGroupIds": [{
+          "Fn::GetAtt": ["TheWebSecurityGroup", "GroupId"]
+        }],
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-WebServerInstance"
+          }
+        }]
+      }
+    },
+    "TheDBSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "the db subnet",
+        "SubnetIds": [{
+          "Ref": "TheDBSubnet"
+        }, {
+          "Ref": "TheOtherDBSubnet"
+        }],
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Sub": "${AWS::StackName}-RDSSubnetGroup"
+          }
+        }]
+      }
+    }
+  },
+  "Outputs": {
+    "BucketUrl": {
+      "Description": "url of code file",
+      "Value": {
+        "Fn::Sub": "s3://${TheCodeBucket}/"
+      }
+    },
+    "MySqlRDSendPoint": {
+      "Description": "db endpoint for client access",
+      "Value": {
+        "Fn::Sub": "RDS MySQL instance listening at ${TheRDSInstance.Endpoint.Address} on port ${TheRDSInstance.Endpoint.Port}"
+      }
+    },
+    "DBSubnetInfo": {
+      "Description": "db subnet details",
+      "Value": {
+        "Fn::Sub": "db subnet ${TheDBSubnet} created in ${TheDBSubnet.AvailabilityZone} AZ and another db subnet ${TheOtherDBSubnet} created in ${TheOtherDBSubnet.AvailabilityZone} AZ"
+      }
+    },
+    "InstanceDetails": {
+      "Description": "web server instance details",
+      "Value": {
+        "Fn::Sub": "web server instance with ip ${TheWebServerInstance.PublicIp} and dns name ${TheWebServerInstance.PublicDnsName} created in ${TheWebServerInstance.AvailabilityZone} AZ"
+      }
+    },
+    "SiteUrl": {
+      "Description": "url of code bucket",
+      "Value": {
+        "Fn::Sub": "http://${TheWebServerInstance.PublicIp}:${WebPort}/ or http://${TheWebServerInstance.PublicDnsName}:${WebPort}/"
+      }
+    },
+    "VpcInfo": {
+      "Description": "main vpc details",
+      "Value": {
+        "Fn::Sub": "vpc id: ${TheVpc} with cidr block ${TheVpc.CidrBlock}"
+      }
+    }
+  }
+}
