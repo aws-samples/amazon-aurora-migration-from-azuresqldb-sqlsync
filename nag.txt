@@ -1,0 +1,47 @@
+------------------------------------------------------------
+main.template
+------------------------------------------------------------------------------------------------------------------------
+[31m| FAIL F37[0m
+[31m|[0m
+[31m| Resources: ["DMSEndPointSource"][0m
+[31m| Line Numbers: [678][0m
+[31m|[0m
+[31m| DMS Endpoint password must not be a plaintext string or a Ref to a Parameter with a Default value.  Can be Ref to a NoEcho Parameter without a Default, or a dynamic reference to a secretsmanager value.[0m
+------------------------------------------------------------
+[33m| WARN W33[0m
+[33m|[0m
+[33m| Resources: ["sub1Public", "sub2Public", "sub3Public"][0m
+[33m| Line Numbers: [227, 243, 259][0m
+[33m|[0m
+[33m| EC2 Subnet should not have MapPublicIpOnLaunch set to true[0m
+------------------------------------------------------------
+[33m| WARN W28[0m
+[33m|[0m
+[33m| Resources: ["dbNode1"][0m
+[33m| Line Numbers: [527][0m
+[33m|[0m
+[33m| Resource found with an explicit name, this disallows updates that require replacement of this resource[0m
+------------------------------------------------------------
+[33m| WARN W77[0m
+[33m|[0m
+[33m| Resources: ["secretClusterMasterUser"][0m
+[33m| Line Numbers: [474][0m
+[33m|[0m
+[33m| Secrets Manager Secret should explicitly specify KmsKeyId. Besides control of the key this will allow the secret to be shared cross-account[0m
+------------------------------------------------------------
+[33m| WARN W36[0m
+[33m|[0m
+[33m| Resources: ["AuroraPostgresSecuritygroup", "StagingSQLSecuritygroup", "DMSInstanceSecuritygroupEgressMsSql", "DMSInstanceSecuritygroupEgressPostgres"][0m
+[33m| Line Numbers: [424, 439, 408, 416][0m
+[33m|[0m
+[33m| Security group rules without a description obscure their purpose and may lead to bad practices in ensuring they only allow traffic from the ports and sources/destinations required.[0m
+------------------------------------------------------------
+[33m| WARN W60[0m
+[33m|[0m
+[33m| Resources: ["vpc"][0m
+[33m| Line Numbers: [203][0m
+[33m|[0m
+[33m| VPC should have a flow log attached[0m
+
+Failures count: 1
+Warnings count: 10
