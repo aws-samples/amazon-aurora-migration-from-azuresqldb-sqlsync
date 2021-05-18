@@ -263,6 +263,7 @@ Resources:
         - RegionalSettings
         - !Ref 'AWS::Region'
         - az1
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-pub-sub-1'
@@ -278,6 +279,7 @@ Resources:
         - RegionalSettings
         - !Ref 'AWS::Region'
         - az2
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-pub-sub-2'
@@ -293,6 +295,7 @@ Resources:
         - RegionalSettings
         - !Ref 'AWS::Region'
         - az3
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-pub-sub-3'
@@ -590,6 +593,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     Properties:
       DBClusterIdentifier: !Ref 'dbCluster'
+      DBInstanceIdentifier: !Sub '${AWS::StackName}-node-1'
       CopyTagsToSnapshot: true
       DBInstanceClass: !FindInMap
         - RegionalSettings
@@ -711,6 +715,7 @@ Resources:
     Type: AWS::DMS::ReplicationSubnetGroup
     Properties:
       ReplicationSubnetGroupDescription: !Sub '${AWS::StackName} DMS Subnet Group'
+      ReplicationSubnetGroupIdentifier: dms-replication-subnet-group
       SubnetIds:
         - !Ref 'sub1Private'
         - !Ref 'sub2Private'
