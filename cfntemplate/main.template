@@ -43,7 +43,6 @@ Parameters:
   StagingSQLPassword:
     Description: Staging DB password
     Type: String
-    Default: StagingSQLPassword123
     NoEcho: true
   ReplicationInstanceClass:
     Description: "The compute and memory capacity of the replication instance Valid\
@@ -216,8 +215,6 @@ Resources:
                   - arn:aws:logs:*:*:*
   FlowLogsGroup:
     Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: FlowLogs
   FlowLogs:
     Type: AWS::EC2::FlowLog
     Properties:
@@ -593,7 +590,6 @@ Resources:
     Type: AWS::RDS::DBInstance
     Properties:
       DBClusterIdentifier: !Ref 'dbCluster'
-      DBInstanceIdentifier: !Sub '${AWS::StackName}-node-1'
       CopyTagsToSnapshot: true
       DBInstanceClass: !FindInMap
         - RegionalSettings
