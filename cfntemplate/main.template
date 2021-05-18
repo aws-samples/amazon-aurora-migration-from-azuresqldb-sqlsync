@@ -43,13 +43,14 @@ Parameters:
   StagingSQLPassword:
     Description: Staging DB password
     Type: String
+    Default: StagingSQLPassword123
     NoEcho: true
   ReplicationInstanceClass:
     Description: "The compute and memory capacity of the replication instance Valid\
       \ Values: dms.t2.micro | dms.t2.small | dms.t2.medium | dms.t2.large | dms.c4.large\
       \ | dms.c4.xlarge | dms.c4.2xlarge | dms.c4.4xlarge\n"
     Type: String
-    Default: dms.r4.2xlarge
+    Default: dms.C5.large
   RdpAccessCIDR:
     Description: Access to the RDP staging environment agent
     Type: String
@@ -710,6 +711,7 @@ Resources:
     Type: AWS::DMS::ReplicationSubnetGroup
     Properties:
       ReplicationSubnetGroupDescription: !Sub '${AWS::StackName} DMS Subnet Group'
+      ReplicationSubnetGroupIdentifier: dms-replication-subnet-group
       SubnetIds:
         - !Ref 'sub1Private'
         - !Ref 'sub2Private'
