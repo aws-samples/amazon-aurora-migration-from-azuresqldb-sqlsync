@@ -194,7 +194,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Sid: vpc-flowlogs
+          - Sid: vpcflowlogs
             Effect: Allow
             Principal:
               Service: vpc-flow-logs.amazonaws.com
@@ -497,17 +497,38 @@ Resources:
   KmsKey:
     Type: AWS::KMS::Key
     Properties:
+      Enabled: true
       KeyPolicy:
         Version: '2012-10-17'
         Statement:
-          - Sid: Enable IAM policies
-            Condition:
-              Bool:
-                kms:GrantIsForAWSResource: true
+          - Sid: allow key administration
             Effect: Allow
             Principal:
               AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action: kms:*
+            Action:
+              - kms:Create*
+              - kms:Describe*
+              - kms:Enable*
+              - kms:List*
+              - kms:Put*
+              - kms:Update*
+              - kms:Revoke*
+              - kms:Disable*
+              - kms:Get*
+              - kms:Delete*
+              - kms:ScheduleKeyDeletion
+              - kms:CancelKeyDeletion
+            Resource: '*'
+          - Sid: allow key use
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
             Resource: '*'
       EnableKeyRotation: true
   secretClusterMasterUser:
@@ -689,7 +710,6 @@ Resources:
     Type: AWS::DMS::ReplicationSubnetGroup
     Properties:
       ReplicationSubnetGroupDescription: !Sub '${AWS::StackName} DMS Subnet Group'
-      ReplicationSubnetGroupIdentifier: dms-replication-subnet-group
       SubnetIds:
         - !Ref 'sub1Private'
         - !Ref 'sub2Private'
