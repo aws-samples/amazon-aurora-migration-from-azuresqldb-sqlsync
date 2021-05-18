@@ -711,7 +711,6 @@ Resources:
     Type: AWS::DMS::ReplicationSubnetGroup
     Properties:
       ReplicationSubnetGroupDescription: !Sub '${AWS::StackName} DMS Subnet Group'
-      ReplicationSubnetGroupIdentifier: dms-replication-subnet-group
       SubnetIds:
         - !Ref 'sub1Private'
         - !Ref 'sub2Private'
